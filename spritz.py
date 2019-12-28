@@ -39,7 +39,7 @@ class Spritz:
     def absorb_nibble(self, x):
         if self.a == 128:
             self.shuffle()
-        self.swap(self.a, 128 + x)
+        self.swap(self.a, self.add(128, x))
         self.a = self.add(self.a, 1)
 
     def absorb_stop(self):
