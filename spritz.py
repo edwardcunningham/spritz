@@ -112,7 +112,7 @@ class Spritz:
             C_i = bytearray(self.add(b1, b2) 
                             for b1, b2 in zip(M_i, self.squeeze(len(M_i))))
             yield from C_i
-            self.absorb(C_i);
+            self.absorb(C_i)
         self.absorb_stop()
         self.absorb(bytearray(self.base_10_to_256(r)))
         yield from self.squeeze(r)
@@ -129,7 +129,7 @@ class Spritz:
             M_i = bytearray(self.add(b1, -b2)
                             for b1, b2 in zip(C_i, self.squeeze(len(C_i))))
             yield from M_i
-            self.absorb(C_i);
+            self.absorb(C_i)
         self.absorb_stop()
         self.absorb(bytearray(self.base_10_to_256(r)))
         calculated_checksum = self.squeeze(r)
