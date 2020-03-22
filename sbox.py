@@ -32,6 +32,12 @@ def read_scope(scope_name=getuser()):
 
 
 def add_scope(scope_yaml, scope_name=getuser()):
+    """
+    current_key: :keyb64
+    previous_keys:
+        - :keyb64
+        - :keyb64
+    """
     global keyring
     scope = safe_load(scope_yaml)
     current_key = pading_urlsafe_b64decode(scope["current_key"].encode())
