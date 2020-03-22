@@ -13,11 +13,13 @@ metadata = 'this is metadata'
 destination = 'my_scope'
 nonce = b'R\xa1o$\xb2\xb3\x1d\xba\xb8\x9b!\xc0'
 # keyid.nonce.aad.ciphertext urlsafe b64
+# len ciphertext = 4/3 * datasize + 39 bytes
+# e.g 1kb -> 1405 byte
 ciphertext = (
-    b'0fuc5Q3IDEorUROn0MeF.'  # keyid
-    b'UqFvJLKzHbq4myHA.'  # nonce
-    b'eyJtZXRhZGF0YSI6ICJ0aGlzIGlzIG1ldGFkYXRhIiwgInNjb3BlIjogIm15X3Njb3BlIn0.'  # headers
-    b'FopoviWBT71ktZjKOwH2mjJWWD1pzgbiO7qSrazu7MPlH0vfobFpxCGyei6ikXsQPd-aPMKQ'  # data
+    b'0fuc5Q3IDEorUROn0MeF.'  # keyid len=20
+    b'UqFvJLKzHbq4myHA.'  # nonce len=16
+    b'eyJtZXRhZGF0YSI6ICJ0aGlzIGlzIG1ldGFkYXRhIiwgInNjb3BlIjogIm15X3Njb3BlIn0.'  # headers len 1/3 grater
+    b'FopoviWBT71ktZjKOwH2mjJWWD1pzgbiO7qSrazu7MPlH0vfobFpxCGyei6ikXsQPd-aPMKQ'  # data len 1/3 grater
 )
 scope_yaml='''
     current_key: YWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWE
