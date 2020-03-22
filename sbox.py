@@ -1,10 +1,10 @@
-from spritz import Spritz
-from os import urandom
 from base64 import urlsafe_b64encode, urlsafe_b64decode
-from yaml import safe_load
-from json import loads, dumps
 from getpass import getuser
+from json import loads, dumps
+from os import urandom
 from pathlib import Path
+from spritz import Spritz
+from yaml import safe_load
 
 def pading_urlsafe_b64decode(encoded_data):
     return urlsafe_b64decode(encoded_data+b'===')
@@ -51,9 +51,16 @@ def add_scope(scope_yaml, scope_name=getuser()):
     }
     keyring[scope_name]["keys"][keyid(current_key)]= current_key
 
-def sbox(headers={}, data=b"", scope=getuser(), pinned_nonce_for_testing = None):
+def sbox(data=b"", headers={}, scope=getuser(), pinned_nonce_for_testing = None):
     """
     sbox a scoped encripted box
+
+    sbox(
+        data: bytes, 
+        headers: dict[str: str], 
+        scope: str, 
+        pinned_nonce_for_testing: bytes
+    ) -> ciphertext: bytes
 
     headers sould be a string to string map utf-8 encoded
     data should be an arbatrary byte stream
@@ -87,6 +94,14 @@ def sbox(headers={}, data=b"", scope=getuser(), pinned_nonce_for_testing = None)
     ])
 
 def unsbox(msg, scope=getuser()):
+    """
+    unsbox unseal the contence of a scoped encripted box
+
+    unsbox(
+        msg: bytes, # the tresnmited or stored ciphertext
+        scope: str, # the name of the scope where the keys are
+    ) -> dict(header: dict[str: str], 'data': bytes}
+    """
     msg_key_id, b64_nonce, b64_header, b64_ciphertext = msg.split(b'.')
 
     msg_header = pading_urlsafe_b64decode(b64_header)
