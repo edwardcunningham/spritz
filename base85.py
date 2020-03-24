@@ -1,6 +1,7 @@
 import os
 import json
 
+# the chars that are 1 byte in a JSON string
 base95_alphabet = ' !"#$%&\'()*+,-./0123456789:;<=>?@ABCDEFGHIJKLMNOPQRSTUVWXYZ[\\]^_`abcdefghijklmnopqrstuvwxyz{|}~'
 
 # drop "\"\\" chr[34, 92]
