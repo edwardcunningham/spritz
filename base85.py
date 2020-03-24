@@ -7,7 +7,17 @@ base95_alphabet = ' !"#$%&\'()*+,-./0123456789:;<=>?@ABCDEFGHIJKLMNOPQRSTUVWXYZ[
 base93_alphabet = " !#$%&'()*+,-./0123456789:;<=>?@ABCDEFGHIJKLMNOPQRSTUVWXYZ[]^_`abcdefghijklmnopqrstuvwxyz{|}~" 
 
 # drop " ',./:[]" chr[32, 39, 44, 46, 47, 58, 91, 93]
-base85_alphabet = "!#$%&()*+-0123456789;<=>?@ABCDEFGHIJKLMNOPQRSTUVWXYZ^_`abcdefghijklmnopqrstuvwxyz{|}~" 
+# drop ' '  32 since it is ambigus with tab 
+# drop '"'  34 since it is a string container
+# drop '$'  36 since it is not on all keybords
+# drop "'"  39 since it is a string container
+# drop ')'  41 since it implies grouping
+# drop ','  44 since it is a separator
+# drop '/'  47 since it is a separator
+# drop '\'  92 since it is a escape character
+# drop ']'  93 since it implies grouping
+# drop '}' 125 since it implies grouping
+base85_alphabet = "!#%&(*+-.0123456789:;<=>?@ABCDEFGHIJKLMNOPQRSTUVWXYZ[^_`abcdefghijklmnopqrstuvwxyz{|~" 
 
 
 integer2character85 = base85_alphabet
