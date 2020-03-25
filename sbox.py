@@ -1,16 +1,10 @@
-from base64 import urlsafe_b64encode, urlsafe_b64decode
 from getpass import getuser
 from json import loads, dumps
 from os import urandom
 from pathlib import Path
 from spritz import Spritz
 from yaml import safe_load
-
-def pading_urlsafe_b64decode(encoded_data):
-    return urlsafe_b64decode(encoded_data+b'===')
-
-def padingless_urlsafe_b64encode(data):
-    return urlsafe_b64encode(data).rstrip(b'=')
+from base85 import encode85, decode85
 
 spritz = Spritz()
 keyring = {}
@@ -18,7 +12,7 @@ keyring = {}
 #                       "keys": {":keyid": ":key"}}}
 
 def keyid(key):
-    return padingless_urlsafe_b64encode(bytes(spritz.hash(key, 15)))
+    return encode85(bytes(spritz.hash(key, 15)))
 
 def read_scope(scope_name=getuser()):
     if scope_name.isalnum():
@@ -33,20 +27,20 @@ def read_scope(scope_name=getuser()):
 
 def add_scope(scope_yaml, scope_name=getuser()):
     """
-    current_key: :keyb64
+    current_key: :keyb85
     previous_keys:
-        - :keyb64
-        - :keyb64
+        - :keyb85
+        - :keyb85
     """
     global keyring
     scope = safe_load(scope_yaml)
-    current_key = pading_urlsafe_b64decode(scope["current_key"].encode())
+    current_key = decode85(scope["current_key"])
     keyring[scope_name] = {
         "current_key": current_key,
         "keys": {
             keyid(key): key
-            for b64_key in scope["previous_keys"]
-            for key in [pading_urlsafe_b64decode(b64_key.encode())]
+            for b85_key in scope["previous_keys"]
+            for key in [decode85(b85_key)]
         }
     }
     keyring[scope_name]["keys"][keyid(current_key)]= current_key
@@ -84,13 +78,12 @@ def sbox(data=b"", headers={}, scope=getuser(), pinned_nonce_for_testing = None)
         Z=nonce,
         K=key
     ))
-
-    # keyid.nonce.header.ciphertext urlsafe b64
-    return b'.'.join([
+    # keyid/nonce/header/ciphertext base85
+    return '/'.join([
         current_keyid,
-        padingless_urlsafe_b64encode(nonce),
-        padingless_urlsafe_b64encode(header),
-        padingless_urlsafe_b64encode(ciphertext),
+        encode85(nonce),
+        encode85(header),
+        encode85(ciphertext),
     ])
 
 def unsbox(msg, scope=getuser()):
@@ -102,10 +95,10 @@ def unsbox(msg, scope=getuser()):
         scope: str, # the name of the scope where the keys are
     ) -> dict(header: dict[str: str], 'data': bytes}
     """
-    msg_key_id, b64_nonce, b64_header, b64_ciphertext = msg.split(b'.')
+    msg_key_id, b85_nonce, b85_header, b85_ciphertext = msg.split('/')
 
-    msg_header = pading_urlsafe_b64decode(b64_header)
-    msg_ciphertext = pading_urlsafe_b64decode(b64_ciphertext)
+    msg_header = decode85(b85_header)
+    msg_ciphertext = decode85(b85_ciphertext)
 
     if scope not in keyring:
         read_scope(scope_name=scope)
@@ -115,7 +108,7 @@ def unsbox(msg, scope=getuser()):
         r=32,
         C=msg_ciphertext,
         H=msg_header,
-        Z=pading_urlsafe_b64decode(b64_nonce),
+        Z=decode85(b85_nonce),
         K=key,
     ))
     return dict(header=loads(msg_header), data=msg_data)
