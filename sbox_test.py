@@ -51,7 +51,7 @@ rdestination = padingless_urlsafe_b64encode(urandom(32)).decode()
 
 add_scope(
     scope_yaml=f'''
-        current_key: {padingless_urlsafe_b64encode(rkey)}
+        current_key: "{padingless_urlsafe_b64encode(rkey)}"
         previous_keys:
             - cHBwcHBwcHBwcHBwcHBwcHBwcHBwcHBwcHBwcHBwcHA
     ''',
