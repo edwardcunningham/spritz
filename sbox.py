@@ -12,7 +12,7 @@ keyring = {}
 #                       "keys": {":keyid": ":key"}}}
 
 def keyid(key):
-    return encode85(bytes(spritz.hash(key, 15)))
+    return encode85(bytes(spritz.hash(key, 8)))
 
 def read_scope(scope_name=getuser()):
     if scope_name.isalnum():

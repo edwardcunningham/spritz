@@ -16,7 +16,7 @@ nonce = b'R\xa1o$\xb2\xb3\x1d\xba\xb8\x9b!\xc0'
 # len ciphertext = 4/3 * datasize + 39 bytes
 # e.g 1kb -> 1405 byte
 ciphertext = (
-    'V8fVY5pbK;X%8luho4p/'  # keyid len=19
+    'HugAg^sZOy/'  # keyid len=10
     'AVG#YbKsXgdC:a_/'  # nonce len=15
     'NWuBBLIGeoLIEFY1BswFHtjJ8L!2C8LIGeoLIEFK1Bst@JnH>99bw^hN!j_*JnH>9O5/'  # headers len ceil(5*len/4) grater
     'X>zSLMy8M0W3cc*`%8wPn^7?JT<k#eU=^BYZrU;V{3y!|_rjr-tZ{F6i^!K@wo:2SzXR'  # data len ceil(5*len/4) grater
