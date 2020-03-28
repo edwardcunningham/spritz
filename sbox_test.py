@@ -22,14 +22,13 @@ ciphertext = (
     'X>zSLMy8M0W3cc*`%8wPn^7?JT<k#eU=^BYZrU;V{3y!|_rjr-tZ{F6i^!K@wo:2SzXR'  # data len ceil(5*len/4) grater
 )
 
-scope_yaml='''
-    current_key: Ctl.s9OPut#r(dxmM%Yak3*UD_HZ3`TZDrs*sGpH
-    previous_keys:
-        - t(<p&@f(Fj2>#FP(p7KSKjZakCTXjKhll=`:2z80
-    '''
+scope_keys='''
+    Ctl.s9OPut#r(dxmM%Yak3*UD_HZ3`TZDrs*sGpH
+    t(<p&@f(Fj2>#FP(p7KSKjZakCTXjKhll=`:2z80
+'''
 
 #tests
-add_scope(scope_yaml=scope_yaml, scope_name=destination)
+add_scope(keys=scope_keys, scope=destination)
 
 assert_eq(sbox(
     scope=destination,
@@ -51,12 +50,11 @@ rkeyid = keyid(rkey)
 rdestination = encode85(urandom(32))
 
 add_scope(
-    scope_yaml=f'''
-        current_key: "{encode85(rkey)}"
-        previous_keys:
-            - t(<p&@f(Fj2>#FP(p7KSKjZakCTXjKhll=`:2z80
+    keys=f'''
+        {encode85(rkey)}
+        (<p&@f(Fj2>#FP(p7KSKjZakCTXjKhll=`:2z80
     ''',
-    scope_name=rdestination,
+    scope=rdestination,
 )
 
 rciphertext = sbox(scope=rdestination, headers={"metadata": rmetadata},  data=rdata)

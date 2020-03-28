@@ -1,17 +1,22 @@
 class Spritz:
-
     def __init__(self):
         self.initialise_state()
 
     def encrypt(self, K, M):
         self.initialise_state()
         self.absorb(K)
-        return bytearray(self.add(b1, b2) for b1, b2 in zip(M, self.squeeze(len(M))))
+        return bytearray(
+            self.add(b1, b2)
+            for b1, b2 in zip(M, self.squeeze(len(M)))
+        )
 
     def decrypt(self, K, C):
         self.initialise_state()
         self.absorb(K)
-        return bytearray(self.add(b1, -b2) for b1, b2 in zip(C, self.squeeze(len(C))))
+        return bytearray(
+            self.add(b1, -b2)
+            for b1, b2 in zip(C, self.squeeze(len(C)))
+        )
 
     def hash(self, M, r):
         self.initialise_state()
@@ -76,13 +81,26 @@ class Spritz:
         self.update()
         return self.output()
 
+    # def update(self):
+    #     self.i = self.add(self.i, self.w)                                    # i = i + w
+    #     self.j = self.add(self.k, self.S[self.add(self.j, self.S[self.i])])  # j = k + S[j+i]
+    #     self.k = self.add(self.i, self.add(self.k, self.S[self.j]))          # k = i + k + S[j]
+    #     self.swap(self.i, self.j)                                            # S[i], S[j] = S[j], S[i]
     def update(self):
-        self.i = self.add(self.i, self.w)
-        self.j = self.add(self.k, self.S[self.add(self.j, self.S[self.i])])
-        self.k = self.add(self.i, self.k, self.S[self.j])
-        self.swap(self.i, self.j)
+        add = self.add
+        i = self.i
+        j = self.j
+        k = self.k
+        S = self.S
+        i = add(i, self.w)             # i = i + w
+        j = add(k, S[add(j, S[i])])    # j = k + S[j+i]
+        self.k = add(i, add(k, S[j]))  # k = i + k + S[j]
+        S[i], S[j] = S[j], S[i]        # S[i], S[j] = S[j], S[i]
+        self.i = i
+        self.j = j
 
     def output(self):
+        # z = S[j + S[i + S[z + k]]]
         self.z = self.S[self.add(self.j, self.S[self.add(self.i, self.S[self.add(self.z, self.k)])])]
         return self.z
 
@@ -137,8 +155,8 @@ class Spritz:
             print(transmitted_checksum, calculated_checksum)
             raise ValueError("Bad MAC")
 
-    def add(self, *args):
-        return sum(args) % 256
+    def add(self, a, b):
+        return (a+b) % 256
 
     def base_10_to_256(self, n):
         m = bytearray()
