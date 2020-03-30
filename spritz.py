@@ -73,13 +73,16 @@ class Spritz:
     def squeeze(self, r):
         if self.a > 0:
             self.shuffle()
-        return bytearray([self.drip() for _ in range(r)])
+        yield from (self.drip() for _ in range(r))
 
     def drip(self):
         if self.a > 0:
             self.shuffle()
         self.update()
-        return self.output()
+
+        # z = S[j + S[i + S[z + k]]]
+        self.z = self.S[self.add(self.j, self.S[self.add(self.i, self.S[self.add(self.z, self.k)])])]
+        return self.z
 
     # def update(self):
     #     self.i = self.add(self.i, self.w)                                    # i = i + w
@@ -98,11 +101,6 @@ class Spritz:
         S[i], S[j] = S[j], S[i]        # S[i], S[j] = S[j], S[i]
         self.i = i
         self.j = j
-
-    def output(self):
-        # z = S[j + S[i + S[z + k]]]
-        self.z = self.S[self.add(self.j, self.S[self.add(self.i, self.S[self.add(self.z, self.k)])])]
-        return self.z
 
     def aead(self, K, Z, H , M , r):
         """
@@ -150,7 +148,7 @@ class Spritz:
             self.absorb(C_i)
         self.absorb_stop()
         self.absorb(bytearray(self.base_10_to_256(r)))
-        calculated_checksum = self.squeeze(r)
+        calculated_checksum = bytes(self.squeeze(r))
         if calculated_checksum != transmitted_checksum:
             print(transmitted_checksum, calculated_checksum)
             raise ValueError("Bad MAC")
@@ -163,4 +161,5 @@ class Spritz:
         while n:
             m.append(n % 256)
             n = n // 256
-        return reversed(m)
+        m.reverse()
+        return m

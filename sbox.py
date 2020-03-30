@@ -77,7 +77,6 @@ def sbox(
     headers = headers.copy()
     headers['scope']=scope # add scope to the header data
     header = dumps(headers).encode()
-
     ciphertext = bytes(spritz.aead(
         r=32,
         M=data,
