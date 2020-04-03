@@ -33,13 +33,15 @@ def kilobytes_per_second(size = 2**10):
             unsbox_tic - sbox_tic,
         ))
     toc = time()
-    print('size', size)
-    print('    sbox_tic_mean   ', size/mean([c[1] for c in counters])/1024, 'Kb/s')
-    print('    sbox_tic_stdev  ', size/stdev([c[1] for c in counters])/1024, 'Kb/s')
-    print('    unsbox_tic_mean ', size/mean([c[2] for c in counters])/1024, 'Kb/s')
-    print('    unsbox_tic_stdev', size/stdev([c[1] for c in counters])/1024, 'Kb/s')
+    print('size', size/1024, 'Kb')
+    for section, index in [('sbox', 1), ('unsbox', 2)]:
+        print('    ' + section)
+        print('        min    ', min(size/c[index]/1024 for c in counters), 'Kb/s')
+        print('        max    ', max(size/c[index]/1024 for c in counters), 'Kb/s')
+        print('        mean   ', mean(size/c[index]/1024 for c in counters), 'Kb/s')
+        if len(counters)>1:
+            print('        stdev  ', stdev(size/c[index]/1024 for c in counters), 'Kb/s')
     print('   ', counter, "iterations", 'in', time()-tic, 'seconds')
-
 # run(
 #     """
 # kilobytes_per_second(2**10)
@@ -49,4 +51,4 @@ def kilobytes_per_second(size = 2**10):
 # )
 kilobytes_per_second(2**10)
 kilobytes_per_second(2**15)
-kilobytes_per_second(2**20)
+# kilobytes_per_second(2**20)

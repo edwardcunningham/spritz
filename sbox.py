@@ -16,8 +16,12 @@ def keyid(key):
 def read_scope(scope_name=getuser()):
     """
     load the scope keys from the users home directoy
+    the keyring is a newline seperated list of b64 keys
+    the first key is considerd the current key and will be
+    used for encription
+    the subsuquent keys are used for decription 
 
-    $home/.sbox/keyring/{scope_name}.keyring
+    $home/.sbox/{scope_name}.keyring
     """
     if scope_name.isalnum():
         with open(Path.joinpath(
@@ -38,7 +42,7 @@ def add_scope(keys, scope=getuser()):
     previous_previous_key_b85
     """
     global keyring
-    keys = keys.split()
+    keys = keys.split('\n')
     keyring[scope] = {
         "current_key": decode85(keys[0]),
         "keys": {
@@ -77,6 +81,7 @@ def sbox(
     headers = headers.copy()
     headers['scope']=scope # add scope to the header data
     header = dumps(headers).encode()
+
     ciphertext = bytes(spritz.aead(
         r=32,
         M=data,

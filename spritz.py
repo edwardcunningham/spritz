@@ -1,5 +1,7 @@
 class Spritz:
+    __slots__ = ['i', 'j', 'k', 'z', 'a', 'w', 'S']
     def __init__(self):
+        self.S = bytearray(range(256))
         self.initialise_state()
 
     def encrypt(self, K, M):
@@ -31,7 +33,8 @@ class Spritz:
     def initialise_state(self):
         self.i = self.j = self.k = self.z = self.a = 0
         self.w = 1
-        self.S = bytearray(range(256))
+        for n in range(256):
+            self.S[n] = n
 
     def absorb(self, I):
         for b in I:
@@ -73,7 +76,7 @@ class Spritz:
     def squeeze(self, r):
         if self.a > 0:
             self.shuffle()
-        yield from (self.drip() for _ in range(r))
+        return bytearray(self.drip() for _ in range(r))
 
     def drip(self):
         if self.a > 0:
@@ -84,23 +87,17 @@ class Spritz:
         self.z = self.S[self.add(self.j, self.S[self.add(self.i, self.S[self.add(self.z, self.k)])])]
         return self.z
 
-    # def update(self):
-    #     self.i = self.add(self.i, self.w)                                    # i = i + w
-    #     self.j = self.add(self.k, self.S[self.add(self.j, self.S[self.i])])  # j = k + S[j+i]
-    #     self.k = self.add(self.i, self.add(self.k, self.S[self.j]))          # k = i + k + S[j]
-    #     self.swap(self.i, self.j)                                            # S[i], S[j] = S[j], S[i]
     def update(self):
-        add = self.add
         i = self.i
+        i = (i + self.w) % 256               # i = i + w
+        self.i = i
         j = self.j
         k = self.k
         S = self.S
-        i = add(i, self.w)             # i = i + w
-        j = add(k, S[add(j, S[i])])    # j = k + S[j+i]
-        self.k = add(i, add(k, S[j]))  # k = i + k + S[j]
-        S[i], S[j] = S[j], S[i]        # S[i], S[j] = S[j], S[i]
-        self.i = i
+        j = (k + S[(j + S[i]) % 256]) % 256  # j = k + S[j+S[i]]
         self.j = j
+        self.k = (i + k + S[j]) % 256        # k = i + k + S[j]
+        S[i], S[j] = S[j], S[i]              # S[i], S[j] = S[j], S[i]
 
     def aead(self, K, Z, H , M , r):
         """
