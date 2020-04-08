@@ -62,7 +62,14 @@ def test(buffer, string):
     new_string = encode85(buffer)
     new_buffer = decode85(string)
     passed = (string == new_string and buffer == new_buffer)
-    # print('pass' if passed else 'fail', buffer, string, '\n    ', new_buffer, new_string)
+    # print(
+    #     'pass' if passed else 'fail',
+    #     buffer,
+    #     string,
+    #     '\n    ',
+    #     new_buffer,
+    #     new_string
+    # )
     assert passed, f"{new_string}, {new_buffer}"
     print('.', end='')
 
@@ -81,8 +88,11 @@ def run_tests():
     test(b'\xff\xff\xff\xff\xff\xff\xff',     '{>_3!{>_0')
     test(b'\xff\xff\xff\xff\xff\xff\xff\xff', '{>_3!{>_3!')
 
-    test(b'!\xad\x97\x96\\\xb9O\x1bek\xc9\x87\x9d:#\xe5b\xe5\x81d\r\xd7ofW\x8fE\xf5\xde\x9eJ\x89',
-        '1o(.{Dm0_RGYeJIYT>#_Fkh5U(M2T7C3%nIpUcDz')
+    test(
+        b'!\xad\x97\x96\\\xb9O\x1bek\xc9\x87\x9d:#\xe5b'
+        b'\xe5\x81d\r\xd7ofW\x8fE\xf5\xde\x9eJ\x89',
+        '1o(.{Dm0_RGYeJIYT>#_Fkh5U(M2T7C3%nIpUcDz'
+    )
 
     test(
         b"Man is distinguished, not only by his reason, but by this singul"

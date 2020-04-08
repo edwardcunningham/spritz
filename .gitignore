@@ -7,3 +7,6 @@
 # python
 __pycache__/
 *.pyc
+
+# binary
+spritz

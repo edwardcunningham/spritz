@@ -160,3 +160,14 @@ class Spritz:
             n = n // 256
         m.reverse()
         return m
+
+    def __repr__(self):
+        return "i {}\nj {}\nk {}\nz {}\na {}\nw {}\ns {}".format(
+          self.i,
+          self.j,
+          self.k,
+          self.z,
+          self.a,
+          self.w,
+          list(self.S),
+        )
