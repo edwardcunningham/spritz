@@ -2,10 +2,9 @@ mod base85;
 use base85::{encode85, decode85};
 
 fn main() {
-  let (_, cpayload) = squeeze(absorb(
-    Spritz::initialize_state(),
-    "ABC".as_bytes(),
-  ), 8);
+  let mut state = Spritz::init();
+  state.absorb("ABC".as_bytes());
+  let cpayload = state.squeeze(8);
   println!("output(ABC) = {:?}", cpayload);
   let mut chash = hash("ABC", 32);
   chash.truncate(8);
@@ -27,9 +26,9 @@ fn main() {
 
 fn test_output(input: &str, expected: &[u8]){
   let payload = input.as_bytes();
-  let mut state = Spritz::initialize_state();
-  state = absorb(state, payload);
-  let (_, actual) = squeeze(state, 8);
+  let mut state = Spritz::init();
+  state.absorb(payload);
+  let actual = state.squeeze(8);
   assert!(actual == expected);
 }
 
@@ -56,7 +55,7 @@ impl std::fmt::Debug for Spritz {
 }
 
 impl Spritz {
-  fn initialize_state() -> Spritz {
+  fn init() -> Spritz {
     return Spritz{
       i: 0, j: 0, k: 0,
       z: 0, a: 0, w: 1,
@@ -82,127 +81,115 @@ impl Spritz {
       ]
     };
   }
-}
 
-fn absorb(mut state: Spritz, buff: &[u8]) -> Spritz {
-  for byte in buff {state = absorb_byte(state, &byte)}
-  return state
-}
-
-fn absorb_byte(mut state: Spritz, b: &u8) -> Spritz {
-  state = absorb_nibble(state, b & 0xf);
-  state = absorb_nibble(state, b >> 4);
-  return state
-}
-
-fn absorb_nibble(mut state: Spritz, x: u8) -> Spritz {
-  if state.a >= 128 {
-    state = shuffle(state);
-  }
-  let a = state.a as usize;
-  state = swap(
-    state,
-    a,
-    (128 + x) as usize,
-  );
-  state.a += 1;
-
-  return state
-}
-
-fn absorb_stop(mut state: Spritz) -> Spritz{
-  if state.a >= 128 { state = shuffle(state) }
-  state.a += 1;
-  return state;
-}
-
-fn shuffle(mut state: Spritz) -> Spritz{
-  state = whip(state); state = crush(state);
-  state = whip(state); state = crush(state);
-  state = whip(state);
-  state.a = 0;
-  return state;
-}
-
-fn whip(mut state: Spritz) -> Spritz{
-  for _ in 0..512 { state = update(state) }
-  state.w = modadd(state.w, 2);
-  return state;
-}
-
-fn crush(mut state: Spritz) -> Spritz{
-  for v in 0..128{
-    if state.s[v] > state.s[255 - v]{
-      state = swap(state, v, 255 - v)
+  fn absorb(&mut self, buff: &[u8]){
+    for byte in buff {
+      self.absorb_byte(&byte)
     }
   }
-  return state;
-}
 
-fn squeeze(mut state: Spritz, r: u64) -> (Spritz, Vec<u8>){
-  if state.a > 0 { state = shuffle(state) }
-
-  let mut p = Vec::with_capacity(r as usize);
-
-  for _ in 0..r {
-    state = drip(state);
-    let z = state.z;
-    p.push(z);
+  fn absorb_byte(&mut self, b: &u8){
+    self.absorb_nibble(b & 0xf);
+    self.absorb_nibble(b >> 4);
   }
-  return (state, p);
-}
 
-fn drip(mut state: Spritz) -> Spritz {
-  if state.a > 0 { state = shuffle(state) }
-  state = update(state);
- return output(state);
-}
+  fn absorb_nibble(&mut self, x: u8){
+    if self.a >= 128 {
+      self.shuffle();
+    }
+    let a = self.a as usize;
+    self.swap(a, (128 + x) as usize);
+    self.a += 1;
+  }
 
-fn update(mut state: Spritz) -> Spritz {
-  // i = i + w
-  // j = k + S[j+S[i]]
-  // k = i + k + S[j]
-  // S[i], S[j] = S[j], S[i]
-  state.i = modadd(state.i, state.w);
-  state.j = modadd(state.k, state.s[modadd(
-    state.j,
-    state.s[state.i as usize]
-  ) as usize]);
-  state.k = modadd(modadd(state.i, state.k), state.s[state.j as usize]);
+  fn absorb_stop(&mut self){
+    if self.a >= 128 { self.shuffle() }
+    self.a += 1;
+  }
 
-  let i = state.i as usize;
-  let j = state.j as usize;
-  state = swap(state, i, j);
-  return state;
-}
+  fn shuffle(&mut self){
+    self.whip(); self.crush();
+    self.whip(); self.crush();
+    self.whip();
+    self.a = 0;
+  }
 
-fn output(mut state: Spritz) -> Spritz {
-  // z = S[j + S[i + S[z + k]]]
-  state.z = state.s[
-    modadd(state.j, state.s[
-      modadd(state.i, state.s[
-        modadd(state.z, state.k) as usize
+  fn whip(&mut self){
+    for _ in 0..512 { self.update() }
+    self.w = modadd(self.w, 2);
+  }
+
+  fn crush(&mut self){
+    for v in 0..128{
+      if self.s[v] > self.s[255 - v]{
+        self.swap(v, 255 - v)
+      }
+    }
+  }
+
+  fn squeeze(&mut self, r: u64) -> Vec<u8> {
+    if self.a > 0 { self.shuffle() }
+
+    let mut p = Vec::with_capacity(r as usize);
+
+    for _ in 0..r {
+      self.drip();
+      let z = self.z;
+      p.push(z);
+    }
+    return p;
+  }
+
+  fn drip(&mut self) -> u8 {
+    if self.a > 0 { self.shuffle() }
+    self.update();
+    return self.output()
+  }
+
+  fn update(&mut self){
+    // i = i + w
+    // j = k + S[j+S[i]]
+    // k = i + k + S[j]
+    // S[i], S[j] = S[j], S[i]
+    self.i = modadd(self.i, self.w);
+    self.j = modadd(self.k, self.s[modadd(
+      self.j,
+      self.s[self.i as usize]
+    ) as usize]);
+    self.k = modadd(modadd(self.i, self.k), self.s[self.j as usize]);
+
+    let i = self.i as usize;
+    let j = self.j as usize;
+    self.swap(i, j);
+  }
+
+  fn output(&mut self) -> u8 {
+    // z = S[j + S[i + S[z + k]]]
+    self.z = self.s[
+      modadd(self.j, self.s[
+        modadd(self.i, self.s[
+          modadd(self.z, self.k) as usize
+        ]) as usize
       ]) as usize
-    ]) as usize
-  ];
-  return state;
+    ];
+    return self.z
+  }
+
+  fn swap(&mut self, i: usize, j: usize){
+    let t = self.s[i];
+    self.s[i] = self.s[j];
+    self.s[j] = t;
+  }
 }
 
 fn modadd(a: u8, b: u8) -> u8 { a.wrapping_add(b) }
 
-fn swap(mut state: Spritz, i: usize, j: usize) -> Spritz {
-  let t = state.s[i];
-  state.s[i] = state.s[j];
-  state.s[j] = t;
-  return state;
-}
-
 fn hash(m: &str, r: u8) -> Vec<u8>{
   let payload = m.as_bytes();
-  let mut state = Spritz::initialize_state();
-  state = absorb(state, payload);
-  state = absorb_stop(state);
-  state = absorb(state, &vec![r]);
-  let (_state, cpayload) = squeeze(state, r as u64);
+  let mut state = Spritz::init();
+  state.absorb(payload);
+  state.absorb_stop();
+  state.absorb(&vec![r]);
+  let cpayload = state.squeeze(r as u64);
   return cpayload;
 }
