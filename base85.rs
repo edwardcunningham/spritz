@@ -1,4 +1,4 @@
-fn encode85(buffer: &Vec<u8>) -> String {
+pub fn encode85(buffer: &Vec<u8>) -> String {
     let mut encoded = "".to_string();
     for i in 0..buffer.len() / 4 {
         let integer = (buffer[4 * i + 0] as u32) << 24
@@ -31,7 +31,7 @@ fn encode85(buffer: &Vec<u8>) -> String {
     return encoded;
 }
 
-fn decode85(string: &str) -> Vec<u8>{
+pub fn decode85(string: &str) -> Vec<u8>{
     let mut decoded = Vec::with_capacity(
         ((string.len() as f64)/5.0*4.0).ceil() as usize
     );
@@ -68,10 +68,19 @@ fn decode85(string: &str) -> Vec<u8>{
 static BASE85_ALPHABET: &str = "!#%&(*+-.0123456789:;<=>?@ABC\
     DEFGHIJKLMNOPQRSTUVWXYZ[^_`abcdefghijklmnopqrstuvwxyz{|~";
 
+static BASE85_INDEXS: [u8; 128] = [
+    99, 99, 99, 99, 99, 99, 99, 99, 99, 99, 99, 99, 99, 99, 99, 99,
+    99, 99, 99, 99, 99, 99, 99, 99, 99, 99, 99, 99, 99, 99, 99, 99,
+    99,  0, 99,  1, 99,  2,  3, 99,  4, 99,  5,  6, 99,  7,  8, 99,
+     9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24,
+    25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39, 40,
+    41, 42, 43, 44, 45, 46, 47, 48, 49, 50, 51, 52, 99, 99, 53, 54,
+    55, 56, 57, 58, 59, 60, 61, 62, 63, 64, 65, 66, 67, 68, 69, 70,
+    71, 72, 73, 74, 75, 76, 77, 78, 79, 80, 81, 82, 83, 99, 84, 99];
+
 fn char_at(s: &str, i: usize) -> char {s.chars().nth(i).unwrap()}
 fn int2char(i: u32) -> char {char_at(&BASE85_ALPHABET, (i % 85) as usize)}
-// todo: replace with a map
-fn char2int(c: char) -> u32 {BASE85_ALPHABET.find(c).unwrap() as u32}
+fn char2int(c: char) -> u32 {BASE85_INDEXS[(c as usize) & 0x7f] as u32}
 
 fn test(buffer: Vec<u8>, string: &str){
     assert_eq!(string, encode85(&buffer));
