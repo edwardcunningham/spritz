@@ -8,5 +8,6 @@
 __pycache__/
 *.pyc
 
-# binary
+# rust
+target/
 spritz
