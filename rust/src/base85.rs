@@ -1,4 +1,4 @@
-pub fn encode85(buffer: &Vec<u8>) -> String {
+pub fn encode85(buffer: &[u8]) -> String {
     let mut encoded = "".to_string();
     for i in 0..buffer.len() / 4 {
         let integer = (buffer[4 * i + 0] as u32) << 24
@@ -88,40 +88,40 @@ fn test(buffer: Vec<u8>, string: &str){
 }
 
 pub fn run_tests(){
-    test(b"\xff\x00\x00\x00"                .to_vec(), "zzB&!"     );
-    test(b"\xff\x00\x00"                    .to_vec(), "zzB&"      );
-    test(b"\xff\x00"                        .to_vec(), "zzB"       );
-    test(b"\xff"                            .to_vec(), "zz"        );
-    test(b"\xff\xff\x00\x00"                .to_vec(), "{>T+!"     );
-    test(b"\xff\xff"                        .to_vec(), "{>T"       );
-    test(b"\xff\xff\xff\x00"                .to_vec(), "{>_0!"     );
-    test(b"\xff\xff\xff"                    .to_vec(), "{>_0"      );
-    test(b"\xff\xff\xff\xff"                .to_vec(), "{>_3!"     );
-    test(b"\xff\xff\xff\xff\xff\x00\x00\x00".to_vec(), "{>_3!zzB&!");
-    test(b"\xff\xff\xff\xff\xff\x00\x00"    .to_vec(), "{>_3!zzB&" );
-    test(b"\xff\xff\xff\xff\xff\x00"        .to_vec(), "{>_3!zzB"  );
-    test(b"\xff\xff\xff\xff\xff"            .to_vec(), "{>_3!zz"   );
-    test(b"\xff\xff\xff\xff\xff\xff"        .to_vec(), "{>_3!{>T"  );
-    test(b"\xff\xff\xff\xff\xff\xff\xff"    .to_vec(), "{>_3!{>_0" );
-    test(b"\xff\xff\xff\xff\xff\xff\xff\xff".to_vec(), "{>_3!{>_3!");
-    test(b"!\xad\x97\x96\\\xb9O\x1bek\xc9\x87\x9d:#\xe5b\xe5\x81d\r\xd7ofW\
-        \x8fE\xf5\xde\x9eJ\x89".to_vec(),
-        "1o(.{Dm0_RGYeJIYT>#_Fkh5U(M2T7C3%nIpUcDz");
-    test(b"Man is distinguished, not only by his reason, but by this singul\
-        ar passion from other animals, which is a lust of the mind, that \
-        by a perseverance of delight in the continued and indefatigable \
-        generation of knowledge, exceeds the short vehemence of any car\
-        nal pleasure.".to_vec(),
-        "?rywfHtjJ3HtmH7JP101L-n2y56PpQLBMRDIrF4:Mx&l=L!2R=FB<F.56PJKLBM(B\
-        1K^@8L!2UBJP104FB0Q6FB<R-Jn3d6Kk;mAJnnb-Kbmm4Ht4?xL#GM`HVI{q1JMuD\
-        F9HH5L0*UIGn~85GQaq-JOj@FLJ20.1Ie[CF9HT%Kkan>GZJ9{FyEl&Gn|^yIpcTy\
-        LBM@>1K^@41InD3LJ;_>GXtwtJOit-JOlBrFBE9zF@L(i1J;>+GZJ:&HtFt9Jm@23\
-        JP{h>GXwLj56PSQFyH:fL!2XBGQb*3JnZyHM(MD~J4XZxGQaw+1IZ5;1Imq%JOOE-\
-        K2?.wL08S=5k");
-    test(b"\x00\t\x98b\x0f\xc7\x99C\x1f\x85\x9a$/C\x9b\x05?\x01\x9b\xe6N\xbf\
-        \x9c\xc7^}\x9d\xa8n;\x9e\x89}\xf9\x9fj\x8d\xb7\xa0K\x9du\xa1,\xad\
-        3\xa2\r\xbc\xf1\xa2\xee\xcc\xaf\xa3\xcf\xdcm\xa4\xb0\xec+\xa5\x91\
-        \xfb\xe9\xa6r".to_vec(),
-        "!#%&(*+-.0123456789:;<=>?@ABCDEFGHIJKLMNOPQRSTUVWXYZ[^_`abcdefghij\
-        klmnopqrstuvwxyz{|~");
+  test(b"\xff\x00\x00\x00"                .to_vec(), "zzB&!"     );
+  test(b"\xff\x00\x00"                    .to_vec(), "zzB&"      );
+  test(b"\xff\x00"                        .to_vec(), "zzB"       );
+  test(b"\xff"                            .to_vec(), "zz"        );
+  test(b"\xff\xff\x00\x00"                .to_vec(), "{>T+!"     );
+  test(b"\xff\xff"                        .to_vec(), "{>T"       );
+  test(b"\xff\xff\xff\x00"                .to_vec(), "{>_0!"     );
+  test(b"\xff\xff\xff"                    .to_vec(), "{>_0"      );
+  test(b"\xff\xff\xff\xff"                .to_vec(), "{>_3!"     );
+  test(b"\xff\xff\xff\xff\xff\x00\x00\x00".to_vec(), "{>_3!zzB&!");
+  test(b"\xff\xff\xff\xff\xff\x00\x00"    .to_vec(), "{>_3!zzB&" );
+  test(b"\xff\xff\xff\xff\xff\x00"        .to_vec(), "{>_3!zzB"  );
+  test(b"\xff\xff\xff\xff\xff"            .to_vec(), "{>_3!zz"   );
+  test(b"\xff\xff\xff\xff\xff\xff"        .to_vec(), "{>_3!{>T"  );
+  test(b"\xff\xff\xff\xff\xff\xff\xff"    .to_vec(), "{>_3!{>_0" );
+  test(b"\xff\xff\xff\xff\xff\xff\xff\xff".to_vec(), "{>_3!{>_3!");
+  test(b"!\xad\x97\x96\\\xb9O\x1bek\xc9\x87\x9d:#\xe5b\xe5\x81d\r\xd7ofW\
+      \x8fE\xf5\xde\x9eJ\x89".to_vec(),
+      "1o(.{Dm0_RGYeJIYT>#_Fkh5U(M2T7C3%nIpUcDz");
+  test(b"Man is distinguished, not only by his reason, but by this singul\
+    ar passion from other animals, which is a lust of the mind, that \
+    by a perseverance of delight in the continued and indefatigable \
+    generation of knowledge, exceeds the short vehemence of any car\
+    nal pleasure.".to_vec(),
+    "?rywfHtjJ3HtmH7JP101L-n2y56PpQLBMRDIrF4:Mx&l=L!2R=FB<F.56PJKLBM(B\
+    1K^@8L!2UBJP104FB0Q6FB<R-Jn3d6Kk;mAJnnb-Kbmm4Ht4?xL#GM`HVI{q1JMuD\
+    F9HH5L0*UIGn~85GQaq-JOj@FLJ20.1Ie[CF9HT%Kkan>GZJ9{FyEl&Gn|^yIpcTy\
+    LBM@>1K^@41InD3LJ;_>GXtwtJOit-JOlBrFBE9zF@L(i1J;>+GZJ:&HtFt9Jm@23\
+    JP{h>GXwLj56PSQFyH:fL!2XBGQb*3JnZyHM(MD~J4XZxGQaw+1IZ5;1Imq%JOOE-\
+    K2?.wL08S=5k");
+  test(b"\x00\t\x98b\x0f\xc7\x99C\x1f\x85\x9a$/C\x9b\x05?\x01\x9b\xe6N\xbf\
+    \x9c\xc7^}\x9d\xa8n;\x9e\x89}\xf9\x9fj\x8d\xb7\xa0K\x9du\xa1,\xad\
+    3\xa2\r\xbc\xf1\xa2\xee\xcc\xaf\xa3\xcf\xdcm\xa4\xb0\xec+\xa5\x91\
+    \xfb\xe9\xa6r".to_vec(),
+    "!#%&(*+-.0123456789:;<=>?@ABCDEFGHIJKLMNOPQRSTUVWXYZ[^_`abcdefghij\
+    klmnopqrstuvwxyz{|~");
 }

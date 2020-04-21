@@ -100,7 +100,18 @@ impl Spritz {
   }
 
   fn crush(&mut self){
-    for v in 0..128 { if self.s[v] > self.s[255 - v]{ self.swap(v, 255 - v) } }
+    for v in 0..128 {
+      if self.s[v] > self.s[255 - v]{ self.swap(v, 255 - v) }
+      // // min without branching
+      // let mut a = self.s[v];
+      // let mut b = self.s[255 - v];
+      // let swap = (0u8).wrapping_sub((a > b) as u8);
+      // a = b ^ a;
+      // b = b ^ (a  & swap);
+      // a = b ^ a;
+      // self.s[v] = a
+      // self.s[255 - v] = b
+    }
   }
 
   fn squeeze(&mut self, r: u64) -> Vec<u8> {

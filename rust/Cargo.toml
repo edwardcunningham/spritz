@@ -11,3 +11,7 @@ name = "sbox"
 path = "src/sbox.rs"
 
 [dependencies]
+dirs = "2.0"
+rand = "0.7.3"
+json = "0.12.4"
+users = "0.10.0"

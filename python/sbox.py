@@ -42,9 +42,11 @@ def add_scope(keys, scope=getuser()):
     previous_previous_key_b85
     """
     global keyring
-    keys = keys.split('\n')
+    keys = [key.split(' ')[0]
+            for key in keys.split('\n')
+            if key and not key.isspace()]
     keyring[scope] = {
-        "current_key": decode85(keys[0]),
+        "current_key": decode85(keys[-1]),
         "keys": {
             keyid(key): key
             for b85_key in keys
