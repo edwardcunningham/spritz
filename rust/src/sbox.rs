@@ -40,14 +40,29 @@ fn main() {
   test_sbox(
     "%Cl*awJGQB/!!!!!!!!!!!!!!!/NWuTFJnH>99c5b_L0-k7FzNB|2-6/`j3|\
      7XFwj^sll#C.G4>v%EJo!AQz;Vb5mmcIMkgBK&cLB@C>m=.w074[lVu#r?~",
-    ("{\"scope\":\"test_scope\"}".to_string(),
-     Ok("this is some data!".to_string())),
+     Ok(("{\"scope\":\"test_scope\"}".to_string(),
+     "this is some data!".to_string())),
   );
   test_sbox(
     "%Cl*awJGQB/!!!!!!!!!!!!!!!/NWuTFJnH>99c5b_L0-k7FzNB|2-6/agq~\
      IqSSb1h4a.H0_@<{&kjL!rR(ORtq4+uf~*%.qnofsHf7q",
-    ("{\"scope\":\"test_scope\"}".to_string(),
-     Ok("woo hoo".to_string())),
+     Ok(("{\"scope\":\"test_scope\"}".to_string(), "woo hoo".to_string())),
+  );
+  test_sbox(
+    "",
+    Err("key not in scope"),
+  );
+  test_sbox(
+    "%Cl*awJGQB",
+    Err("no nonce"),
+  );
+  test_sbox(
+    "%Cl*awJGQB/!!!!!!!!!!!!!!!",
+    Err("no header"),
+  );
+  test_sbox(
+    "%Cl*awJGQB/!!!!!!!!!!!!!!!/NWuTFJnH>99c5b_L0-k7FzNB|2-6",
+    Err("no payload"),
   );
 
   println!("Pass");
@@ -55,45 +70,39 @@ fn main() {
 
 fn test_sbox(
   expected_boxed: &str,
-  expected_unboxed: (
-    std::string::String,
-    std::result::Result<std::string::String, &str>,
-  ),
+  expected_unboxed: Result<(String, String), &'static str>,
 ){
-  // file: test_scope.keyring
-  // "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+  // """test_scope.keyring
+  // aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
+  // """
 
-  let actual_unboxed = unsbox(expected_boxed, "test_scope");
+  let actual_unboxed = unsbox_with_scope(expected_boxed, "test_scope");
   assert_eq!(actual_unboxed, expected_unboxed);
 
-  let actual_boxed = sbox_with_headers_scope_and_nonce(
-    expected_unboxed.1.unwrap().as_bytes(),
-    HashMap::new(),
-    "test_scope",
-    &[0u8; 12],
-  );
-  assert_eq!(actual_boxed, expected_boxed);
+  if expected_unboxed.is_ok(){
+    let actual_boxed = sbox_with_headers_scope_and_nonce(
+      expected_unboxed.unwrap().1.as_bytes(),
+      HashMap::new(),
+      "test_scope",
+      &[0u8; 12],
+    );
+    assert_eq!(actual_boxed, expected_boxed);
+  }
 }
 
 fn keyid(key: &[u8]) -> String { encode85(&hash(&key, 8)) }
 
 fn test_keyid(key: &str, expected_keyid: &str){
   let actual_keyid = keyid(&key.as_bytes());
-  // println!("{:?} {:?}", actual_keyid, expected_keyid);
   assert_eq!(actual_keyid, expected_keyid);
 }
 
 pub fn sbox(data: &[u8]) -> String {sbox_with_headers(data, HashMap::new())}
 
 pub fn sbox_with_headers(
-  data: &[u8],
-  headers: HashMap<String, String>
+  data: &[u8], headers: HashMap<String, String>
 ) -> String {
-  sbox_with_headers_and_scope(
-    data,
-    headers,
-    &users::get_current_username().unwrap().into_string().unwrap(),
-  )
+  sbox_with_headers_and_scope(data, headers, &username())
 }
 
 pub fn sbox_with_scope(data: &[u8], scope: &str) -> String {
@@ -115,7 +124,7 @@ fn sbox_with_headers_scope_and_nonce(
   nonce: &[u8]
 ) -> String {
   let mut keyring: HashMap<String, HashMap<String, Vec<u8>>> = HashMap::new();
-  let keys_str = read_scope(scope);
+  let keys_str = read_scope(scope).unwrap();
   let current_key = add_scope(&mut keyring, &keys_str, scope);
 
   headers.insert("scope".to_string(), scope.to_string());
@@ -131,28 +140,55 @@ fn sbox_with_headers_scope_and_nonce(
   ].join("/")
 }
 
-fn unsbox(msg: &str, scope: &str) -> (String, Result<String, &'static str>){
+pub fn unsbox(msg: &str) -> Result<(String, String), &'static str> {
+  unsbox_with_scope(msg, &username())
+}
+
+fn username() -> String {
+  users::get_current_username().expect("no username")
+    .into_string().expect("username not utf-8")
+}
+
+pub fn unsbox_with_scope(
+  msg: &str, scope: &str
+) -> Result<(String, String), &'static str> {
   let mut keyring: HashMap<String, HashMap<String, Vec<u8>>> = HashMap::new();
-  let keys_str = read_scope(scope);
+  let keys_str = read_scope(&scope)?;
   add_scope(&mut keyring, &keys_str, scope);
 
   let mut parts = msg.split('/');
-  let key = keyring
-    .get(scope).expect("scope not in keyring")
-    .get(parts.next().unwrap()).expect("key not in scope");
-  let nonce = decode85(&parts.next().unwrap());
-  let header = decode85(&parts.next().unwrap());
-  let ciphertext = decode85(parts.next().unwrap());
-  let msg_data = aead_decrypt(&key, &nonce, &header, &ciphertext, 32);
-  return (String::from_utf8(header).unwrap(), msg_data)
+  let key = match keyring.get(scope) {
+    Some(scope_keys) => match scope_keys.get(parts.next().expect("no key")){
+      Some(key) => {key}
+      None => {return Err("key not in scope")}
+    },
+    None  => {return Err("scope not in keyring")},
+  };
+  let nonce = decode85(&match parts.next() {
+    Some(part) => { part }
+    None => {return Err("no nonce") }
+  });
+  let header = decode85(&match parts.next() {
+    Some(part) => { part }
+    None => {return Err("no header") }
+  });
+  let ciphertext = decode85(&match parts.next() {
+    Some(part) => { part }
+    None => {return Err("no payload") }
+  });
+  let msg_data = aead_decrypt(&key, &nonce, &header, &ciphertext, 32)?;
+  return Ok((String::from_utf8(header).unwrap(), msg_data))
 }
 
-fn read_scope(scope_name: &str) -> String {
+fn read_scope(scope_name: &str) -> Result<String, &'static str> {
   let mut filename = dirs::home_dir().expect("home_dir not found");
   filename.push(".sbox");
   filename.push(scope_name);
   filename.set_extension("keyring");
-  return std::fs::read_to_string(filename).expect("keyring file");
+  match std::fs::read_to_string(filename){
+    Ok(data) => {Ok(data)}
+    Err(_) => {Err("bad keyring file")}
+  }
 }
 
 fn add_scope(
@@ -162,7 +198,6 @@ fn add_scope(
   scope: &str,
 ) -> Vec<u8> {
   keyring.insert(scope.to_string(), HashMap::new());
-
   let scope_keys = keyring.get_mut(scope).unwrap();
   let mut lastkey = Vec::new();
   for row in keys_str.split('\n'){
