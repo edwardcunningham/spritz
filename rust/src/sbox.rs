@@ -10,6 +10,9 @@ use rand::Rng;
 use base85::{encode85, decode85};
 use spritz::{test_aead, test_hash, test_output, hash, aead, aead_decrypt};
 use std::collections::HashMap;
+use std::fs::File;
+use std::io::Read;
+use std::time::SystemTime;
 
 fn main() {
   base85::run_tests();
@@ -66,6 +69,15 @@ fn main() {
   );
 
   println!("Pass");
+  bench_sbox();
+}
+
+fn bench_sbox(){
+  let mut data = [0; 1048576];
+  File::open("/dev/urandom").unwrap().read_exact(&mut data).unwrap();
+  let tic = SystemTime::now();
+  let _ciphertext = sbox(&data);
+  println!("MB/sec {}", 1.0/tic.elapsed().unwrap().as_secs_f64());
 }
 
 fn test_sbox(
