@@ -1,23 +1,23 @@
-pub fn test_output(input: &str, expected: &[u8]){
-  let payload = input.as_bytes();
+pub fn test_output(input: &[u8], expected: &[u8]){
+  let payload = input;
   let mut spritz = Spritz::init();
   spritz.absorb(payload);
   let actual = spritz.squeeze(8);
   assert!(actual == expected);
 }
 
-pub fn test_hash(input: &str, expected: &[u8]){
-    let mut actual = hash(&input.as_bytes(), 32);
+pub fn test_hash(input: &[u8], expected: &[u8]){
+    let mut actual = hash(&input, 32);
     actual.truncate(8);
     assert!(actual == expected);
 }
 
-pub fn test_aead(decrypted: &str, encrypted: &[u8]){
+pub fn test_aead(decrypted: &[u8], encrypted: &[u8]){
   let actual_encrypted = aead(
-    "key".as_bytes(),
-    "nonce".as_bytes(),
-    "header".as_bytes(),
-    &decrypted.as_bytes(),
+    b"key",
+    b"nonce",
+    b"header",
+    &decrypted,
     32
   );
   // println!("{:?}\n{:?}", actual_encrypted, encrypted);
@@ -101,16 +101,17 @@ impl Spritz {
 
   fn crush(&mut self){
     for v in 0..128 {
-      if self.s[v] > self.s[255 - v]{ self.swap(v, 255 - v) }
-      // // min without branching
-      // let mut a = self.s[v];
-      // let mut b = self.s[255 - v];
-      // let swap = (0u8).wrapping_sub((a > b) as u8);
-      // a = b ^ a;
-      // b = b ^ (a  & swap);
-      // a = b ^ a;
-      // self.s[v] = a
-      // self.s[255 - v] = b
+      // if self.s[v] > self.s[255 - v]{ self.swap(v, 255 - v) }
+
+      // min without branching
+      let mut a = self.s[v];
+      let mut b = self.s[255 - v];
+      let swap = (0u8).wrapping_sub((a > b) as u8);
+      a = b ^ a;
+      b = b ^ (a  & swap);
+      a = b ^ a;
+      self.s[v] = a;
+      self.s[255 - v] = b;
     }
   }
 
@@ -186,8 +187,8 @@ pub fn aead(
   let mut cpayload: Vec<u8>= Vec::with_capacity(
     message.len() + authentication_tag_length as usize
   );
+  let mut chunk = Vec::with_capacity(64);
   for i in (0..message.len()).step_by(64) {
-    let mut chunk = Vec::with_capacity(64);
     for j in 0..64 {
       if i + j >= message.len() { break }
       chunk.push(modadd(spritz.drip(), message[i + j]));
@@ -198,8 +199,8 @@ pub fn aead(
   }
   spritz.absorb_stop();
   spritz.absorb_byte(&authentication_tag_length);
-  for b in spritz.squeeze(authentication_tag_length as u64) {
-    cpayload.push(b);
+  for _ in 0..authentication_tag_length {
+    cpayload.push(spritz.drip());
   }
   return cpayload;
 }
@@ -210,19 +211,19 @@ pub fn aead_decrypt(
   header :  &[u8],
   message : &[u8],
   authentication_tag_length: u8
-) -> Result<String, &'static str> {
+) -> Result<Vec<u8>, &'static str> {
   let payload_length = message.len() - authentication_tag_length as usize;
-  let mut payload = "".to_string();
+  let mut payload = Vec::with_capacity(payload_length);
   let mut spritz = Spritz::init();
   spritz.absorb(key);    spritz.absorb_stop();
   spritz.absorb(nonce);  spritz.absorb_stop();
   spritz.absorb(header); spritz.absorb_stop();
+  let mut chunk = Vec::with_capacity(64);
   for i in (0..payload_length).step_by(64) {
-    let mut chunk = Vec::with_capacity(64);
     for j in 0..64 {
       if i + j >= payload_length { break }
       chunk.push(message[i + j]);
-      payload.push(message[i + j].wrapping_sub(spritz.drip()) as char);
+      payload.push(message[i + j].wrapping_sub(spritz.drip()));
     }
     spritz.absorb(&chunk);
     chunk.clear();
