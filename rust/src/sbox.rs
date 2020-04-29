@@ -70,7 +70,7 @@ fn main() {
 
 fn bench_sbox() {
   let mut tic = Instant::now();
-  let mut data = [0; 1048576]; // 1048576 is 1MB
+  let mut data = vec![0u8; 1048576]; // 1048576 is 1MB
   File::open("/dev/urandom").unwrap().read_exact(&mut data).unwrap();
   println!(
     "rand   MB/sec {}\n",
