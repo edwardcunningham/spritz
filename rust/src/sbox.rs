@@ -69,23 +69,60 @@ fn main() {
 }
 
 fn bench_sbox() {
-  let mut data = [0; 65535]; // 1048576 is 1MB
+  let mut tic = Instant::now();
+  let mut data = [0; 1048576]; // 1048576 is 1MB
   File::open("/dev/urandom")
     .unwrap()
     .read_exact(&mut data)
     .unwrap();
-  let tic = Instant::now();
-  let _boxed = sbox(&data);
   println!(
-    "box   MB/sec {}",
+    "rand   MB/sec {}",
     (data.len() as f64 / 1048576.0) / tic.elapsed().as_secs_f64(),
   );
-  let toc = Instant::now();
+
+  tic = Instant::now();
+  let _boxed = sbox(&data);
+  println!(
+    "box    MB/sec {}",
+    (data.len() as f64 / 1048576.0) / tic.elapsed().as_secs_f64(),
+  );
+
+  tic = Instant::now();
   let _unboxed = unsbox(&_boxed);
   println!(
-    "unbox MB/sec {}",
-    (data.len() as f64 / 1048576.0) / toc.elapsed().as_secs_f64(),
+    "unbox  MB/sec {}",
+    (data.len() as f64 / 1048576.0) / tic.elapsed().as_secs_f64(),
   );
+
+  tic = Instant::now();
+  let _enced = encode85(&data);
+  println!(
+    "enc85  MB/sec {}",
+    (data.len() as f64 / 1048576.0) / tic.elapsed().as_secs_f64(),
+  );
+
+  tic = Instant::now();
+  let _deced = decode85(&_enced);
+  println!(
+    "dec85  MB/sec {}",
+    (data.len() as f64 / 1048576.0) / tic.elapsed().as_secs_f64(),
+  );
+
+  tic = Instant::now();
+  let ciphertext = aead(b"current_key", b"nonce", b"header", &data, 32);
+  println!(
+    "aead   MB/sec {}",
+    (data.len() as f64 / 1048576.0) / tic.elapsed().as_secs_f64(),
+  );
+
+  tic = Instant::now();
+  let _msg_data = aead_decrypt(b"key", b"nonce", b"header", &ciphertext, 32);
+  println!(
+    "unaead MB/sec {}",
+    (data.len() as f64 / 1048576.0) / tic.elapsed().as_secs_f64(),
+  );
+
+  // println!("{:?} {:?}", _boxed, _unboxed)
 }
 
 fn test_sbox(

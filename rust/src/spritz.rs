@@ -184,14 +184,13 @@ pub fn aead(
   spritz.absorb(key);    spritz.absorb_stop();
   spritz.absorb(nonce);  spritz.absorb_stop();
   spritz.absorb(header); spritz.absorb_stop();
-  let mut cpayload: Vec<u8>= Vec::with_capacity(
-    message.len() + authentication_tag_length as usize
-  );
-  let mut chunk = Vec::with_capacity(64);
+  let payload_length = message.len() + authentication_tag_length as usize;
+  let mut cpayload: Vec<u8> = Vec::with_capacity(payload_length);
+  let mut chunk: Vec<u8> = Vec::with_capacity(64);
   for i in (0..message.len()).step_by(64) {
     for j in 0..64 {
       if i + j >= message.len() { break }
-      chunk.push(modadd(spritz.drip(), message[i + j]));
+      chunk.push(message[i + j].wrapping_add(spritz.drip()));
       cpayload.push(chunk[j]);
     }
     spritz.absorb(&chunk);
@@ -212,18 +211,18 @@ pub fn aead_decrypt(
   message : &[u8],
   authentication_tag_length: u8
 ) -> Result<Vec<u8>, &'static str> {
-  let payload_length = message.len() - authentication_tag_length as usize;
-  let mut payload = Vec::with_capacity(payload_length);
   let mut spritz = Spritz::init();
   spritz.absorb(key);    spritz.absorb_stop();
   spritz.absorb(nonce);  spritz.absorb_stop();
   spritz.absorb(header); spritz.absorb_stop();
-  let mut chunk = Vec::with_capacity(64);
+  let payload_length = message.len() - authentication_tag_length as usize;
+  let mut payload: Vec<u8> = Vec::with_capacity(payload_length);
+  let mut chunk: Vec<u8> = Vec::with_capacity(64);
   for i in (0..payload_length).step_by(64) {
     for j in 0..64 {
       if i + j >= payload_length { break }
       chunk.push(message[i + j]);
-      payload.push(message[i + j].wrapping_sub(spritz.drip()));
+      payload.push(chunk[j].wrapping_sub(spritz.drip()));
     }
     spritz.absorb(&chunk);
     chunk.clear();

@@ -1,5 +1,7 @@
 pub fn encode85(buffer: &[u8]) -> String {
-    let mut encoded = "".to_string();
+    let mut encoded = String::with_capacity(
+        ((buffer.len() as f64)/4.0*5.0).ceil() as usize
+    );
     for i in 0..buffer.len() / 4 {
         let integer = (buffer[4 * i + 0] as u32) << 24
                     | (buffer[4 * i + 1] as u32) << 16
@@ -78,7 +80,7 @@ static BASE85_INDEXS: [u8; 128] = [
     55, 56, 57, 58, 59, 60, 61, 62, 63, 64, 65, 66, 67, 68, 69, 70,
     71, 72, 73, 74, 75, 76, 77, 78, 79, 80, 81, 82, 83, 99, 84, 99];
 
-fn char_at(s: &str, i: usize) -> char {s.chars().nth(i).unwrap()}
+fn char_at(s: &str, i: usize) -> char {s.as_bytes()[i] as char}
 fn int2char(i: u32) -> char {char_at(&BASE85_ALPHABET, (i % 85) as usize)}
 fn char2int(c: char) -> u32 {BASE85_INDEXS[(c as usize) & 0x7f] as u32}
 
