@@ -92,7 +92,7 @@ fn bench_sbox() {
   );
 
   tic = Instant::now();
-  let ciphertext = aead(b"current_key", b"nonce", b"header", &data, 32);
+  let ciphertext = aead(b"key", b"nonce", b"header", &data, 32);
   println!(
     "aead   MB/sec {}",
     (data.len() as f64 / 1048576.0) / tic.elapsed().as_secs_f64(),
@@ -100,6 +100,7 @@ fn bench_sbox() {
 
   tic = Instant::now();
   let _msg_data = aead_decrypt(b"key", b"nonce", b"header", &ciphertext, 32);
+  if _msg_data.is_err(){ println!("{:?}", _msg_data) }
   println!(
     "unaead MB/sec {}\n",
     (data.len() as f64 / 1048576.0) / tic.elapsed().as_secs_f64(),
