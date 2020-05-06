@@ -4,14 +4,10 @@ version = "0.1.0"
 authors = ["Aaron Goldman <GoldmanAaron@gmail.com>"]
 edition = "2018"
 
-# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
-
-[[bin]]
-name = "sbox"
-path = "src/sbox.rs"
+[profile.release]
+debug = true
 
 [dependencies]
 dirs = "2.0"
-rand = "0.7.3"
 json = "0.12.4"
 users = "0.10.0"
