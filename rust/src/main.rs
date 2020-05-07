@@ -3,7 +3,13 @@ mod sbox;
 mod spritz;
 
 use self::base85::{decode85, encode85};
-use self::sbox::{keyid, sbox, sbox_with_headers_scope_and_nonce, unsbox, unsbox_with_scope};
+use self::sbox::{
+    keyid,
+    sbox_with_scope,
+    sbox_with_headers_scope_and_nonce,
+    unsbox,
+    unsbox_with_scope
+};
 use self::spritz::{aead, aead_decrypt, hash};
 use std::collections::HashMap;
 use std::fs::File;
@@ -66,21 +72,22 @@ fn main() {
 
     println!("Pass");
     bench_sbox();
+    for var in std::env::vars() {
+        if var.0 == "HOME" || var.0 == "LOGNAME" {
+            println!("{:?}", var)
+        }
+    }
     // repl();
 }
 
 fn repl() {
     let mut input = String::new();
-    while input != "\n" {
-        print!(">");
+    loop {
+        println!(">");
         input.clear();
-        let n = io::stdin().read_line(&mut input);
-        println!(
-            "{:?}\n{:?}\n{:?}",
-            n,
-            input,
-            unsbox(&input.split("\n").next().unwrap())
-        );
+        let _n = io::stdin().read_line(&mut input);
+        if input == "\n" { break }
+        println!("{:?}", unsbox(&input.split("\n").next().unwrap()));
     }
 }
 
@@ -128,14 +135,14 @@ pub fn bench_sbox() {
     );
 
     tic = Instant::now();
-    let _boxed = sbox(&data);
+    let _boxed = sbox_with_scope(&data, "test_scope");
     println!(
         "box    MB/sec {}",
         (data.len() as f64 / 1048576.0) / tic.elapsed().as_secs_f64(),
     );
 
     tic = Instant::now();
-    let _unboxed = unsbox(&_boxed);
+    let _unboxed = unsbox_with_scope(&_boxed, "test_scope");
     println!(
         "unbox  MB/sec {}",
         (data.len() as f64 / 1048576.0) / tic.elapsed().as_secs_f64(),
