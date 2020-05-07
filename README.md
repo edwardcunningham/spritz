@@ -173,3 +173,36 @@ lengths
 | charicters | 0 | 2 | 3 | 4 | 5 |
 ```
 
+#### regex for base85
+```python
+b85_regex = """
+(?:
+    (?:       [!#%&(*+\-.0-[^-z] [!#%&(*+\-.0-[^-|~]{4})
+  | (?: {     [!#%&(*+\-.0-=]    [!#%&(*+\-.0-[^-|~]{3})
+  | (?: {>    [!#%&(*+\-.0-^]    [!#%&(*+\-.0-[^-|~]{2})
+  | (?: {>_   [!#%&(*+\-.0-2]    [!#%&(*+\-.0-[^-|~])
+  | (?: {>_3! )
+)+ [!#%&(*+\-.0-[^-|~]{0,4}
+| [!#%&(*+\-.0-[^-|~]{1,4}
+""".replace("\n","").replace(" ","")
+
+char  = f"[!#%&(*+\-.0-[^-|~]" # match a single char of b85
+# len 5 forms          full   filling            free
+first_0_chars_full = f"       [!#%&(*+\-.0-[^-z] {char}{{4}}"
+first_1_chars_full = f"{{     [!#%&(*+\-.0-=]    {char}{{3}}"
+first_2_chars_full = f"{{>    [!#%&(*+\-.0-^]    {char}{{2}}"
+first_3_chars_full = f"{{>_   [!#%&(*+\-.0-2]    {char}     "
+first_4_chars_full = f"{{>_3  !                             "
+five_char_forms = f"""
+(?: {first_0_chars_full}
+  | {first_1_chars_full}
+  | {first_2_chars_full}
+  | {first_3_chars_full}
+  | {first_4_chars_full})
+"""
+tail  = f"{char}{{0,4}}" # the tail of a match longer then 5
+short = f"{char}{{1,4}}" # len 1-4
+b85_regex_parts = f"{five_char_forms}+ {tail} | {short}".replace("\n","").replace(" ","")
+assert b85_regex_parts == b85_regex
+```
+

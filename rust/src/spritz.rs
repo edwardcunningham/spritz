@@ -1,12 +1,4 @@
-pub struct Spritz {
-    i: u8,
-    j: u8,
-    k: u8,
-    z: u8,
-    a: u8,
-    w: u8,
-    s: [u8; 256],
-}
+pub struct Spritz {i: u8, j: u8, k: u8, z: u8, a: u8, w: u8, s: [u8; 256]}
 
 impl std::fmt::Debug for Spritz {
     fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
@@ -80,24 +72,24 @@ impl Spritz {
     }
 
     fn shuffle(&mut self) {
-        self.whip();
-        self.crush();
-        self.whip();
-        self.crush();
-        self.whip();
-        self.a = 0;
+        self.whip(); self.crush();
+        self.whip(); self.crush();
+        self.whip(); self.a = 0;
     }
 
     fn whip(&mut self) {
-        for _ in 0..512 {
-            self.update()
-        }
+        for _ in 0..512 {self.update()}
         self.w = self.w.wrapping_add(2);
     }
 
     fn crush(&mut self) {
         for v in 0..128 {
-            // if self.s[v] > self.s[255 - v]{ self.swap(v, 255 - v) }
+            // s[v], s[255 - v] = min(s[v], s[255 - v]), max(s[v], s[255 - v])
+            // if self.s[v] > self.s[255 - v]{
+            //     let t = self.s[v as usize];
+            //     self.s[v as usize] = self.s[(255 - v) as usize];
+            //     self.s[(255 - v) as usize] = t;
+            // }
 
             // min without branching
             let mut a = self.s[v];
@@ -142,15 +134,14 @@ impl Spritz {
         ]);
 
         // k = i + k + S[j]
-        self.k = self
-            .i
-            .wrapping_add(self.k)
-            .wrapping_add(self.s[self.j as usize]);
+        self.k = self.i.wrapping_add(self.k)
+          .wrapping_add(self.s[self.j as usize]);
 
         // S[i], S[j] = S[j], S[i]
-        let t = self.s[self.i as usize];
-        self.s[self.i as usize] = self.s[self.j as usize];
-        self.s[self.j as usize] = t;
+        let a = self.s[self.i as usize];
+        let b = self.s[self.j as usize];
+        self.s[self.i as usize] = b;
+        self.s[self.j as usize] = a;
     }
 
     fn output(&mut self) -> u8 {

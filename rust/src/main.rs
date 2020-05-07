@@ -5,6 +5,7 @@ mod spritz;
 use self::base85::{decode85, encode85};
 use self::sbox::{
     keyid,
+    sbox,
     sbox_with_scope,
     sbox_with_headers_scope_and_nonce,
     unsbox,
@@ -72,15 +73,11 @@ fn main() {
 
     println!("Pass");
     bench_sbox();
-    for var in std::env::vars() {
-        if var.0 == "HOME" || var.0 == "LOGNAME" {
-            println!("{:?}", var)
-        }
-    }
     // repl();
 }
 
 fn repl() {
+    println!("{:?}", sbox(b"bla bla bla"));
     let mut input = String::new();
     loop {
         println!(">");

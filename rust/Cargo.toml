@@ -8,6 +8,4 @@ edition = "2018"
 debug = true
 
 [dependencies]
-dirs = "2.0"
 json = "0.12.4"
-users = "0.10.0"

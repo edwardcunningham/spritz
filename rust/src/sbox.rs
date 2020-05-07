@@ -1,6 +1,4 @@
-extern crate dirs;
 extern crate json;
-extern crate users;
 
 use crate::base85::{decode85, encode85};
 use crate::spritz::{aead, aead_decrypt, hash};
@@ -61,10 +59,7 @@ pub fn unsbox(msg: &str) -> Result<(String, Vec<u8>), &'static str> {
 }
 
 fn username() -> String {
-    users::get_current_username()
-        .expect("no username")
-        .into_string()
-        .expect("username not utf-8")
+    std::env::vars().find(|k| k.0=="LOGNAME").expect("no username").1
 }
 
 pub fn unsbox_with_scope(msg: &str, scope: &str) -> Result<(String, Vec<u8>), &'static str> {
@@ -97,7 +92,9 @@ pub fn unsbox_with_scope(msg: &str, scope: &str) -> Result<(String, Vec<u8>), &'
 }
 
 fn read_scope(scope_name: &str) -> Result<String, &'static str> {
-    let mut filename = dirs::home_dir().expect("home_dir not found");
+    let mut filename = std::path::PathBuf::from(
+        std::env::vars().find(|k| k.0=="HOME").expect("home_dir not found").1
+    );
     filename.push(".sbox");
     filename.push(scope_name);
     filename.set_extension("keyring");
