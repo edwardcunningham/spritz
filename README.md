@@ -176,23 +176,26 @@ lengths
 #### regex for base85
 ```python
 b85_regex = """
-(?:
-    (?:       [!#%&(*+\-.0-[^-z] [!#%&(*+\-.0-[^-|~]{4})
-  | (?: {     [!#%&(*+\-.0-=]    [!#%&(*+\-.0-[^-|~]{3})
-  | (?: {>    [!#%&(*+\-.0-^]    [!#%&(*+\-.0-[^-|~]{2})
-  | (?: {>_   [!#%&(*+\-.0-2]    [!#%&(*+\-.0-[^-|~])
-  | (?: {>_3! )
+(?:       [!#%&(*+\-.0-[^-z] [!#%&(*+\-.0-[^-|~]{4}
+  | {     [!#%&(*+\-.0-=]    [!#%&(*+\-.0-[^-|~]{3}
+  | {>    [!#%&(*+\-.0-^]    [!#%&(*+\-.0-[^-|~]{2}
+  | {>_   [!#%&(*+\-.0-2]    [!#%&(*+\-.0-[^-|~]
+  | {>_3  !
 )+ [!#%&(*+\-.0-[^-|~]{0,4}
 | [!#%&(*+\-.0-[^-|~]{1,4}
 """.replace("\n","").replace(" ","")
 
 char  = f"[!#%&(*+\-.0-[^-|~]" # match a single char of b85
-# len 5 forms          full   filling            free
-first_0_chars_full = f"       [!#%&(*+\-.0-[^-z] {char}{{4}}"
-first_1_chars_full = f"{{     [!#%&(*+\-.0-=]    {char}{{3}}"
-first_2_chars_full = f"{{>    [!#%&(*+\-.0-^]    {char}{{2}}"
-first_3_chars_full = f"{{>_   [!#%&(*+\-.0-2]    {char}     "
-first_4_chars_full = f"{{>_3  !                             "
+filling_char_0 = "[!#%&(*+\-.0-[^-z]"
+filling_char_1 = "[!#%&(*+\-.0-=]"
+filling_char_2 = "[!#%&(*+\-.0-^]"
+filling_char_3 = "[!#%&(*+\-.0-2]"
+# len 5 forms          full   filling          free
+first_0_chars_full = f"       {filling_char_0} {char}{{4}}"
+first_1_chars_full = f"{{     {filling_char_1} {char}{{3}}"
+first_2_chars_full = f"{{>    {filling_char_2} {char}{{2}}"
+first_3_chars_full = f"{{>_   {filling_char_3} {char}     "
+first_4_chars_full = f"{{>_3  !                           "
 five_char_forms = f"""
 (?: {first_0_chars_full}
   | {first_1_chars_full}
