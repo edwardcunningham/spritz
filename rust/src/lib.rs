@@ -9,11 +9,17 @@ pub use self::base85::{
 pub use self::sbox::{
     keyid,
     sbox,
-    sbox_with_headers,
+    sbox_with_header,
     sbox_with_scope,
-    sbox_with_headers_and_scope,
+    sbox_with_header_and_scope,
+    sbox_from_json,
+    sbox_from_json_with_header,
+    sbox_from_json_with_scope,
+    sbox_from_json_with_header_and_scope,
+    sbox_from_json_with_header_scope_and_nonce,
     unsbox,
     unsbox_with_scope,
+    unsbox_from_json_with_scope,
 };
 pub use self::spritz::{
     hash,
@@ -26,11 +32,13 @@ mod tests {
     use crate::base85::{decode85, encode85};
     use crate::sbox::{
         keyid,
-        sbox_with_headers_scope_and_nonce,
-        unsbox_with_scope
+        sbox_with_header_scope_and_nonce,
+        sbox_from_json_with_header_scope_and_nonce,
+        unsbox_with_scope,
+        unsbox_from_json_with_scope,
     };
     use crate::spritz::{Spritz, aead, aead_decrypt, hash};
-    use std::collections::HashMap;
+    use json::{JsonValue, Null};
 
     #[test]
     fn it_works() {
@@ -66,7 +74,7 @@ mod tests {
             "%Cl*awJGQB/!!!!!!!!!!!!!!!/NWuTFJnH>99c5b_L0-k7FzNB|2-6/`j3|\
            7XFwj^sll#C.G4>v%EJo!AQz;Vb5mmcIMkgBK&cLB@C>m=.w074[lVu#r?~",
             Ok((
-                "{\"scope\":\"test_scope\"}".to_string(),
+                b"{\"scope\":\"test_scope\"}".to_vec(),
                 b"this is some data!".to_vec(),
             )),
         );
@@ -74,7 +82,7 @@ mod tests {
             "%Cl*awJGQB/!!!!!!!!!!!!!!!/NWuTFJnH>99c5b_L0-k7FzNB|2-6/agq~\
            IqSSb1h4a.H0_@<{&kjL!rR(ORtq4+uf~*%.qnofsHf7q",
             Ok((
-                "{\"scope\":\"test_scope\"}".to_string(),
+                b"{\"scope\":\"test_scope\"}".to_vec(),
                 b"woo hoo".to_vec(),
             )),
         );
@@ -85,7 +93,10 @@ mod tests {
             "%Cl*awJGQB/!!!!!!!!!!!!!!!/NWuTFJnH>99c5b_L0-k7FzNB|2-6",
             Err("no payload"),
         );
-    
+        test_sbox_from_json_with_header_and_scope(
+            Null, 
+            Null, 
+            &"%Cl*awJGQB/!!!!!!!!!!!!!!!/JQZk9/LbX(2kav[pMqQMC*`7oUS(j&m7j*B{9-x^5V-~h7Bptob");
         println!("Pass");
     }
 
@@ -124,7 +135,7 @@ mod tests {
 
     pub fn test_sbox(
         expected_boxed: &str,
-        expected_unboxed: Result<(String, Vec<u8>), &'static str>,
+        expected_unboxed: Result<(Vec<u8>, Vec<u8>), &'static str>,
       ) {
           // """test_scope.keyring
           // aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
@@ -134,9 +145,9 @@ mod tests {
           assert_eq!(actual_unboxed, expected_unboxed);
       
           if expected_unboxed.is_ok() {
-              let actual_boxed = sbox_with_headers_scope_and_nonce(
+              let actual_boxed = sbox_with_header_scope_and_nonce(
                   &expected_unboxed.unwrap().1,
-                  HashMap::new(),
+                  b"{\"scope\":\"test_scope\"}",
                   "test_scope",
                   &[0u8; 12],
               );
@@ -196,5 +207,20 @@ mod tests {
             "!#%&(*+-.0123456789:;<=>?@ABCDEFGHIJKLMNOPQRSTUVWXYZ[^_`abcdefghij\
         klmnopqrstuvwxyz{|~",
         );
+    }
+
+    fn test_sbox_from_json_with_header_and_scope(header: JsonValue, body: JsonValue, expected: &str){
+        let actual_sbox = sbox_from_json_with_header_scope_and_nonce(
+            body, 
+            header, 
+            &"test_scope",
+            &[0u8; 12],
+        );
+        let actual_usbox = unsbox_from_json_with_scope(
+            expected,
+            &"test_scope",
+        );
+        println!("{:?} {:?}", actual_sbox, actual_usbox);
+        assert!(actual_sbox == expected);
     }
 }
