@@ -41,17 +41,21 @@ mod tests {
     use json::{JsonValue, Null};
 
     #[test]
-    fn it_works() {
-        assert_eq!(2 + 2, 4);
-
+    fn output_tests() {
         test_output(b"ABC", &decode85("MLLTuyBE.B"));
         test_output(b"spam", &decode85("v<pd0vU-[@"));
         test_output(b"arcfour", &decode85(".b%F~r%Dh;"));
-    
+    }
+
+    #[test]
+    fn hash_tests() {
         test_hash(b"ABC", &decode85("!n{-gSr&iS"));
         test_hash(b"spam", &decode85("`Rs3^;A9U3"));
         test_hash(b"arcfour", &decode85("{2ESf%~&2j"));
-    
+    }
+
+    #[test]
+    fn aead_tests() {
         test_aead(
             b"ABC",
             &decode85("Rv0(1hs@aK7O^;R-I4^ss^SC6Q-pB*x!M4&kJm:PyQXV"),
@@ -64,12 +68,18 @@ mod tests {
             b"arcfour",
             &decode85("_<L|Qat+pGNrAs+Xc!R|vi8v%4axmYPr~ac&We.wJ;9iiPjZ+"),
         );
-    
+    }
+
+    #[test]
+    fn keyid_tests() {
         test_keyid("my_key_id", "mVU!c-nS?_");
         test_keyid("ABC", "isZ{2O{{&8");
         test_keyid("spam", "ZT+[pIT.OQ");
         test_keyid("arcfour", "V.|2:mM`g(");
-    
+    }
+
+    #[test]
+    fn sbox_tests() {
         test_sbox(
             "%Cl*awJGQB/!!!!!!!!!!!!!!!/NWuTFJnH>99c5b_L0-k7FzNB|2-6/`j3|\
            7XFwj^sll#C.G4>v%EJo!AQz;Vb5mmcIMkgBK&cLB@C>m=.w074[lVu#r?~",
@@ -93,11 +103,11 @@ mod tests {
             "%Cl*awJGQB/!!!!!!!!!!!!!!!/NWuTFJnH>99c5b_L0-k7FzNB|2-6",
             Err("no payload"),
         );
+
         test_sbox_from_json_with_header_and_scope(
             Null, 
             Null, 
             &"%Cl*awJGQB/!!!!!!!!!!!!!!!/JQZk9/LbX(2kav[pMqQMC*`7oUS(j&m7j*B{9-x^5V-~h7Bptob");
-        println!("Pass");
     }
 
     fn test_base85(buffer: Vec<u8>, string: &str) {
@@ -161,7 +171,7 @@ mod tests {
       }
 
     #[test]
-    fn run_base85_tests() {
+    fn base85_tests() {
         test_base85(b"\xff\x00\x00\x00".to_vec(), "zzB&!");
         test_base85(b"\xff\x00\x00".to_vec(), "zzB&");
         test_base85(b"\xff\x00".to_vec(), "zzB");
