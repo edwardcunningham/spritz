@@ -7,6 +7,8 @@ use std::fs::File;
 use std::io::Read;
 use json::{stringify, JsonValue, JsonResult,  parse};
 
+// static mut keyring: Option<Box<HashMap<String, HashMap<String, Vec<u8>>>>> = None;
+
 pub fn keyid(key: &[u8]) -> String {
     encode85(&hash(&key, 8))
 }
@@ -67,26 +69,35 @@ pub fn unsbox_with_scope(msg: &str, scope: &str) -> Result<(Vec<u8>, Vec<u8>), &
     add_scope(&mut keyring, &keys_str, scope);
 
     let mut parts = msg.split('/');
-    let key = match keyring.get(scope) {
-        Some(scope_keys) => match scope_keys.get(parts.next().expect("no key")) {
-            Some(key) => key,
-            None => return Err("key not in scope"),
-        },
+    let scope = match keyring.get(scope) {
+        Some(scope_keys) => scope_keys,
         None => return Err("scope not in keyring"),
     };
-    let nonce = decode85(&match parts.next() {
+    let keyid =  match parts.next(){
+        Some(id) => id,
+        None => return Err("no key"),
+    };
+    let key = match scope.get(keyid){
+        Some(key) => key,
+        None => return Err("key not in scope"),
+    };
+    let nonce85 = match parts.next() {
         Some(part) => part,
         None => return Err("no nonce"),
-    });
-    let header = decode85(&match parts.next() {
+    };
+    let header85 = match parts.next() {
         Some(part) => part,
         None => return Err("no header"),
-    });
-    let ciphertext = decode85(&match parts.next() {
+    };
+    let body85 = match parts.next() {
         Some(part) => part,
-        None => return Err("no payload"),
-    });
-    let msg_data = aead_decrypt(&key, &nonce, &header, &ciphertext, 32)?;
+        None => return Err("no body"),
+    };
+
+    let nonce = decode85(&nonce85);
+    let header = decode85(&header85);
+    let body = decode85(&body85);
+    let msg_data = aead_decrypt(&key, &nonce, &header, &body, 32)?;
     return Ok((header, msg_data));
 }
 
