@@ -45,7 +45,7 @@ pub fn sbox_with_header_scope_and_nonce(
 
     let ciphertext = aead(&current_key, &nonce, &header, data, 32);
 
-    // keyid/nonce/header/ciphertext all in base85
+    // keyid/nonce/header/cipherbody all in base85
     vec![
         keyid(&current_key),
         encode85(&nonce),
@@ -63,23 +63,23 @@ fn username() -> String {
     std::env::vars().find(|k| k.0=="LOGNAME").expect("no username").1
 }
 
+// fn unwrap_or_err(o: Option<T>, s: &str) -> Result<T, &'static str> {
+//     match o {
+//         Some(value) => value,
+//         None => return Err(s),
+//     };
+// }
+
 pub fn unsbox_with_scope(msg: &str, scope: &str) -> Result<(Vec<u8>, Vec<u8>), &'static str> {
     let mut keyring: HashMap<String, HashMap<String, Vec<u8>>> = HashMap::new();
     let keys_str = read_scope(&scope)?;
     add_scope(&mut keyring, &keys_str, scope);
 
     let mut parts = msg.split('/');
-    let scope = match keyring.get(scope) {
-        Some(scope_keys) => scope_keys,
-        None => return Err("scope not in keyring"),
-    };
     let keyid =  match parts.next(){
         Some(id) => id,
-        None => return Err("no key"),
-    };
-    let key = match scope.get(keyid){
-        Some(key) => key,
-        None => return Err("key not in scope"),
+        // this can not happen "".split('/') is [""]
+        None => return Err("no key"), 
     };
     let nonce85 = match parts.next() {
         Some(part) => part,
@@ -94,9 +94,20 @@ pub fn unsbox_with_scope(msg: &str, scope: &str) -> Result<(Vec<u8>, Vec<u8>), &
         None => return Err("no body"),
     };
 
+    let scope = match keyring.get(scope) {
+        Some(scope_keys) => scope_keys,
+        None => return Err("scope not in keyring"),
+    };
+
+    let key = match scope.get(keyid){
+        Some(key) => key,
+        None => return Err("key not in scope"),
+    };
+
     let nonce = decode85(&nonce85);
     let header = decode85(&header85);
     let body = decode85(&body85);
+
     let msg_data = aead_decrypt(&key, &nonce, &header, &body, 32)?;
     return Ok((header, msg_data));
 }
@@ -135,7 +146,7 @@ fn add_scope(
 }
 
 fn gen_nonce() -> [u8; 12] {
-    let mut data = [0u8; 12]; // 1048576 is 1MB
+    let mut data = [0u8; 12];
     File::open("/dev/urandom")
         .unwrap()
         .read_exact(&mut data)

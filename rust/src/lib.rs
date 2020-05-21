@@ -96,18 +96,21 @@ mod tests {
                 b"woo hoo".to_vec(),
             )),
         );
-        test_sbox("", Err("key not in scope"));
-        test_sbox("%Cl*awJGQB", Err("no nonce"));
-        test_sbox("%Cl*awJGQB/!!!!!!!!!!!!!!!", Err("no header"));
+        test_sbox("", Err("no nonce"));
+        test_sbox("/", Err("no header"));
+        test_sbox("//", Err("no body"));
+        test_sbox("///", Err("key not in scope"));
+        test_sbox("%Cl*awJGQB///", Err("Bad MAC"));
         test_sbox(
-            "%Cl*awJGQB/!!!!!!!!!!!!!!!/NWuTFJnH>99c5b_L0-k7FzNB|2-6",
-            Err("no payload"),
+            "%Cl*awJGQB/!!!!!!!!!!!!!!!//\
+            @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@",
+            Err("Bad MAC"),
         );
-
         test_sbox_from_json_with_header_and_scope(
             Null, 
             Null, 
-            &"%Cl*awJGQB/!!!!!!!!!!!!!!!/JQZk9/LbX(2kav[pMqQMC*`7oUS(j&m7j*B{9-x^5V-~h7Bptob");
+            &"%Cl*awJGQB/!!!!!!!!!!!!!!!/JQZk9/\
+            LbX(2kav[pMqQMC*`7oUS(j&m7j*B{9-x^5V-~h7Bptob");
     }
 
     fn test_base85(buffer: Vec<u8>, string: &str) {
@@ -130,13 +133,19 @@ mod tests {
     }
     
     pub fn test_aead(decrypted: &[u8], encrypted: &[u8]) {
-        let actual_encrypted = aead(b"key", b"nonce", b"header", &decrypted, 32);
+        let actual_encrypted = aead(
+            b"key",
+            b"nonce",
+            b"header",
+            &decrypted,
+            32,
+        );
         assert!(actual_encrypted == encrypted);
     
         let actual_decrypted = aead_decrypt(
-            "key".as_bytes(),
-            "nonce".as_bytes(),
-            "header".as_bytes(),
+            b"key",
+            b"nonce",
+            b"header",
             &encrypted,
             32,
         );
@@ -172,21 +181,21 @@ mod tests {
 
     #[test]
     fn base85_tests() {
-        test_base85(b"\xff\x00\x00\x00".to_vec(), "zzB&!");
-        test_base85(b"\xff\x00\x00".to_vec(), "zzB&");
-        test_base85(b"\xff\x00".to_vec(), "zzB");
-        test_base85(b"\xff".to_vec(), "zz");
-        test_base85(b"\xff\xff\x00\x00".to_vec(), "{>T+!");
-        test_base85(b"\xff\xff".to_vec(), "{>T");
-        test_base85(b"\xff\xff\xff\x00".to_vec(), "{>_0!");
-        test_base85(b"\xff\xff\xff".to_vec(), "{>_0");
-        test_base85(b"\xff\xff\xff\xff".to_vec(), "{>_3!");
+        test_base85(b"\xff\x00\x00\x00"                .to_vec(), "zzB&!"     );
+        test_base85(b"\xff\x00\x00"                    .to_vec(), "zzB&"      );
+        test_base85(b"\xff\x00"                        .to_vec(), "zzB"       );
+        test_base85(b"\xff"                            .to_vec(), "zz"        );
+        test_base85(b"\xff\xff\x00\x00"                .to_vec(), "{>T+!"     );
+        test_base85(b"\xff\xff"                        .to_vec(), "{>T"       );
+        test_base85(b"\xff\xff\xff\x00"                .to_vec(), "{>_0!"     );
+        test_base85(b"\xff\xff\xff"                    .to_vec(), "{>_0"      );
+        test_base85(b"\xff\xff\xff\xff"                .to_vec(), "{>_3!"     );
         test_base85(b"\xff\xff\xff\xff\xff\x00\x00\x00".to_vec(), "{>_3!zzB&!");
-        test_base85(b"\xff\xff\xff\xff\xff\x00\x00".to_vec(), "{>_3!zzB&");
-        test_base85(b"\xff\xff\xff\xff\xff\x00".to_vec(), "{>_3!zzB");
-        test_base85(b"\xff\xff\xff\xff\xff".to_vec(), "{>_3!zz");
-        test_base85(b"\xff\xff\xff\xff\xff\xff".to_vec(), "{>_3!{>T");
-        test_base85(b"\xff\xff\xff\xff\xff\xff\xff".to_vec(), "{>_3!{>_0");
+        test_base85(b"\xff\xff\xff\xff\xff\x00\x00"    .to_vec(), "{>_3!zzB&" );
+        test_base85(b"\xff\xff\xff\xff\xff\x00"        .to_vec(), "{>_3!zzB"  );
+        test_base85(b"\xff\xff\xff\xff\xff"            .to_vec(), "{>_3!zz"   );
+        test_base85(b"\xff\xff\xff\xff\xff\xff"        .to_vec(), "{>_3!{>T"  );
+        test_base85(b"\xff\xff\xff\xff\xff\xff\xff"    .to_vec(), "{>_3!{>_0" );
         test_base85(b"\xff\xff\xff\xff\xff\xff\xff\xff".to_vec(), "{>_3!{>_3!");
         test_base85(
             b"!\xad\x97\x96\\\xb9O\x1bek\xc9\x87\x9d:#\xe5b\xe5\x81d\r\xd7ofW\

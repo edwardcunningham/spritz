@@ -214,6 +214,9 @@ pub fn aead_decrypt(
     spritz.absorb_stop();
     spritz.absorb(header);
     spritz.absorb_stop();
+    if message.len() < authentication_tag_length as usize {
+        return Err("Bad MAC")
+    }
     let payload_length = message.len() - authentication_tag_length as usize;
     let mut payload: Vec<u8> = Vec::with_capacity(payload_length);
     let mut chunk: Vec<u8> = Vec::with_capacity(64);
