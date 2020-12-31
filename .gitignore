@@ -1,0 +1,13 @@
+# ipynb
+.ipynb_checkpoints/
+
+# mypy
+.mypy_cache/
+
+# python
+__pycache__/
+*.pyc
+
+# rust
+target/
+spritz

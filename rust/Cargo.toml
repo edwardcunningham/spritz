@@ -1,0 +1,11 @@
+[package]
+name = "spritz"
+version = "0.1.0"
+authors = ["Aaron Goldman <GoldmanAaron@gmail.com>"]
+edition = "2018"
+
+[profile.release]
+debug = true
+
+[dependencies]
+json = "0.12.4"
